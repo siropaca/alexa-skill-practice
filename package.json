@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "ask-sdk-core": "^2.7.0"
+    "ask-sdk": "^2.7.0"
   },
   "devDependencies": {},
   "scripts": {
