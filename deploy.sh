@@ -3,7 +3,7 @@
 ZIP_FILENAME="function"
 LAMBDA_FUNCNAME="alexaPractice"
 
-echo "Compressing..."
+echo "Zipping..."
 zip -rq $ZIP_FILENAME.zip * -x deploy.sh
 
 echo "Uploading..."
