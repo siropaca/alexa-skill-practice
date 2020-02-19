@@ -1,4 +1,4 @@
-const Alexa = require("ask-sdk-core");
+const Alexa = require("ask-sdk");
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
@@ -70,16 +70,6 @@ const CancelAndStopIntentHandler = {
   }
 };
 
-const SessionEndedRequestHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === "SessionEndedRequest";
-  },
-  handle(handlerInput) {
-    //any cleanup logic goes here
-    return handlerInput.responseBuilder.getResponse();
-  }
-};
-
 const ErrorHandler = {
   canHandle() {
     return true;
@@ -94,25 +84,12 @@ const ErrorHandler = {
   }
 };
 
-let skill;
-
-exports.handler = async function(event, context) {
-  console.log(`REQUEST++++${JSON.stringify(event)}`);
-  if (!skill) {
-    skill = Alexa.SkillBuilders.custom()
-      .addRequestHandlers(
-        LaunchRequestHandler,
-        HelloWorldIntentHandler,
-        HelpIntentHandler,
-        CancelAndStopIntentHandler,
-        SessionEndedRequestHandler
-      )
-      .addErrorHandlers(ErrorHandler)
-      .create();
-  }
-
-  const response = await skill.invoke(event, context);
-  console.log(`RESPONSE++++${JSON.stringify(response)}`);
-
-  return response;
-};
+exports.handler = Alexa.SkillBuilders.standard()
+  .addRequestHandlers(
+    LaunchRequestHandler,
+    HelloWorldIntentHandler,
+    HelpIntentHandler,
+    CancelAndStopIntentHandler
+  )
+  .addErrorHandlers(ErrorHandler)
+  .lambda();
