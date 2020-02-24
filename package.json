@@ -1,5 +1,5 @@
 {
-  "name": "alexa-practice",
+  "name": "alexa-skill-practice",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -14,13 +14,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/siropaca/alexa-practice.git"
+    "url": "git+https://github.com/siropaca/alexa-skill-practice.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/siropaca/alexa-practice/issues"
+    "url": "https://github.com/siropaca/alexa-skill-practice/issues"
   },
-  "homepage": "https://github.com/siropaca/alexa-practice#readme"
+  "homepage": "https://github.com/siropaca/alexa-skill-practice#readme"
 }

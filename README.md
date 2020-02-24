@@ -1,1 +1,1 @@
-# alexa-practice
+# alexa-skill-practice

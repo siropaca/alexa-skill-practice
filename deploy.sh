@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ZIP_FILENAME="function"
-LAMBDA_FUNCNAME="alexaPractice"
+LAMBDA_FUNCNAME="alexaSkillPractice"
 
 echo "Zipping..."
 zip -rq $ZIP_FILENAME.zip * -x deploy.sh
