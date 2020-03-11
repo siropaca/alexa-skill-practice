@@ -1,14 +1,11 @@
 const Alexa = require("ask-sdk");
-const request = require("request-promise");
-const config = require("./config");
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === "LaunchRequest";
+    return Alexa.getRequestType(handlerInput.requestEnvelope) === "LaunchRequest";
   },
   handle(handlerInput) {
-    const speechText =
-      "こんにちは、チャットボットです。なにか話しかけてください。";
+    const speechText = "こんにちは。";
 
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -17,56 +14,78 @@ const LaunchRequestHandler = {
   }
 };
 
-const HelloWorldIntentHandler = {
+const SetSessionIntentHandler = {
   canHandle(handlerInput) {
     return (
-      handlerInput.requestEnvelope.request.type === "IntentRequest" &&
-      handlerInput.requestEnvelope.request.intent.name === "HelloWorldIntent"
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      Alexa.getIntentName(handlerInput.requestEnvelope) === "SetSessionIntent"
     );
   },
-  async handle(handlerInput) {
-    const spokenWords =
-      handlerInput.requestEnvelope.request.intent.slots.message.value;
-    let speechText = "";
-    const repromptText = "どうかしましたか？";
+  handle(handlerInput) {
+    if (handlerInput.requestEnvelope.request.intent.confirmationStatus === "DENIED") {
+      const speechText = "キャンセルしました。";
 
-    const options = {
-      method: "POST",
-      uri: "https://api.a3rt.recruit-tech.co.jp/talk/v1/smalltalk",
-      timeout: 3000,
-      json: true,
-      form: {
-        apikey: config.TALK_API_KEY,
-        query: spokenWords
-      }
-    };
+      return handlerInput.responseBuilder
+        .speak(speechText)
+        .getResponse();
+    }
 
-    await request(options)
-      .then(body => {
-        speechText = body.results[0].reply;
-      })
-      .catch(err => {
-        speechText = "すみません。わかりませんでした。";
-        console.log(err);
-      });
+    const value = Alexa.getSlotValue(handlerInput.requestEnvelope, "value");
+
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    sessionAttributes.value = value;
+    handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+
+    const speechText = `セッションアトリビュートに、${value}を保存しました。`;
 
     return handlerInput.responseBuilder
       .speak(speechText)
-      .reprompt(repromptText)
+      .reprompt(speechText)
       .getResponse();
+  }
+};
+
+const GetSessionIntentHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      Alexa.getIntentName(handlerInput.requestEnvelope) === "GetSessionIntent"
+    );
+  },
+  handle(handlerInput) {
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    if (sessionAttributes.value) {
+      const speechText = `セッションに保存した値は、${sessionAttributes.value}です。`;
+
+      return handlerInput.responseBuilder
+        .speak(speechText)
+        .reprompt(speechText)
+        .getResponse();
+    } else {
+      const speechText = `セッションに、値が保存されていません。`;
+
+      return handlerInput.responseBuilder
+        .speak(speechText)
+        .reprompt(speechText)
+        .addDelegateDirective({
+          name: "SetSessionIntent",
+          confirmationStatus: "NONE",
+          slots: {}
+        })
+        .getResponse();
+    }
   }
 };
 
 const HelpIntentHandler = {
   canHandle(handlerInput) {
     return (
-      handlerInput.requestEnvelope.request.type === "IntentRequest" &&
-      handlerInput.requestEnvelope.request.intent.name === "AMAZON.HelpIntent"
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent"
     );
   },
   handle(handlerInput) {
-    const speechText =
-      "私はチャットボットです。あなたの話し相手になりますよ。なにか話しかけてみてください。";
+    const speechText = "セッションアトリビュートのテストをします。";
 
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -78,17 +97,24 @@ const HelpIntentHandler = {
 const CancelAndStopIntentHandler = {
   canHandle(handlerInput) {
     return (
-      handlerInput.requestEnvelope.request.type === "IntentRequest" &&
-      (handlerInput.requestEnvelope.request.intent.name ===
-        "AMAZON.CancelIntent" ||
-        handlerInput.requestEnvelope.request.intent.name ===
-          "AMAZON.StopIntent")
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.CancelIntent" ||
+        Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent")
     );
   },
   handle(handlerInput) {
-    const speechText = "またお話ししましょう。";
+    const speechText = "Goodbye!";
 
     return handlerInput.responseBuilder.speak(speechText).getResponse();
+  }
+};
+
+const SessionEndedRequestHandler = {
+  canHandle(handlerInput) {
+    return Alexa.getRequestType(handlerInput.requestEnvelope) === "SessionEndedRequest";
+  },
+  handle(handlerInput) {
+    return;
   }
 };
 
@@ -99,22 +125,18 @@ const ErrorHandler = {
   handle(handlerInput, error) {
     console.log(`Error handled: ${error.message}`);
 
-    let speechText =
-      "ごめんなさい。エラーが発生しました。もう一度話しかけてください。";
-
-    return handlerInput.responseBuilder
-      .speak(speechText)
-      .reprompt(speechText)
-      .getResponse();
+    return handlerInput.responseBuilder.speak("エラーが発生しました。").getResponse();
   }
 };
 
-exports.handler = Alexa.SkillBuilders.standard()
+exports.handler = Alexa.SkillBuilders.custom()
   .addRequestHandlers(
     LaunchRequestHandler,
-    HelloWorldIntentHandler,
+    SetSessionIntentHandler,
+    GetSessionIntentHandler,
     HelpIntentHandler,
-    CancelAndStopIntentHandler
+    CancelAndStopIntentHandler,
+    SessionEndedRequestHandler
   )
   .addErrorHandlers(ErrorHandler)
   .lambda();
